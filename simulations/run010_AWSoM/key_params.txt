@@ -1,0 +1,4 @@
+model=AWSoM
+map=GONG_maps/GONG_20110201_2354.fits
+PoyntingFluxPerBSi=7.5e+05
+realizations=1
