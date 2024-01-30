@@ -36,37 +36,34 @@ def mse(simTimestamps, simValues, dataTimestamps, dataValues):
 
     EFFECTS: returns value of mean squared error between the two datasets
     """
-    simTimestamps = np.array(simTimestamps)
-    dataTimestamps = np.array(dataTimestamps)
     
-    interpValues = interpolate(simTimestamps, simValues, dataTimestamps, dataValues)
+    # replace all nan values in original data with 0
+    nanMask = ~np.isnan(dataValues)
+    dataValues = np.array(dataValues)
+    dataTimestamps = np.array(dataTimestamps)
+    dataTimestamps = dataTimestamps[nanMask]
+    dataValues = dataValues[nanMask]
+
+    interpSimValues = interpolate(dataTimestamps, simTimestamps, simValues)
 
     # calculate mse
     n = len(dataTimestamps)
-    squaredDiff = [(actual - predicted)**2 for actual, predicted in zip(interpValues[1], interpValues[0])]
+    squaredDiff = [(actual - predicted)**2 for actual, predicted in zip(dataValues, interpSimValues)]
     mse = sum(squaredDiff) / n
-    
+
     return mse
 
-def interpolate(x1, y1, x2, y2):
+def interpolate(x1, x2, y2):
     """
     REQUIRES:
-    - x1, y1: 1st dataset
+    - x1: 1st dataset x axis
     - x2, y2: 2nd dataset
 
-    EFFECTS: returns interpolation of 2 data sets in [Y1, Y2, X] with all 3 objects being arrays
+    EFFECTS: interpolates dataset 2 onto x1
     """
-    # get interpolation bounds
-    minX = max(min(x1), min(x2))
-    maxX = min(max(x1), max(x2))
+    interpY2 = np.interp(x1, x2, y2)
 
-    # create new x range for interpolation
-    interpX = np.linspace(minX, maxX, num = 25, endpoint=True)
-    
-    interpY1 = np.interp(interpX, x1, y1)
-    interpY2 = np.interp(interpX, x2, y2)
-
-    return [np.array(interpY1), np.array(interpY2), np.array(interpX)]
+    return np.array(interpY2)
 
 def findPlotOpacities(arr):
     """

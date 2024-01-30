@@ -54,6 +54,8 @@ def parseSimRunResults(file):
                 runResults["ehot"].append(row[20])
                 runResults["I01"].append(row[21])
                 runResults["I02"].append(row[22])
+                
+                #runResults["P=poyntingFlux"].append()
 
                 #quantity conversions
                 rho = float(row[11])
