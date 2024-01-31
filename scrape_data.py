@@ -36,8 +36,6 @@ def scrapeData(vars, startTime, endTime):
         statusCode = status['http']['status_code']
         if(statusCode != 200):
             raise ConnectionError(f"Failed to connect to dataset. Status code: {statusCode}")
-        
-        print(f"Successfully scraped CDAS data. Status code: {statusCode}")
 
         # loop through and format scraped data into scrapedData
         scrapedData = dict()

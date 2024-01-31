@@ -14,12 +14,18 @@ configs = {
     "plotDataLineColor": "black", # "Data" refers to the scraped CDAS data plots
     "plotDataLineWidth": "1.4",
 
-    "bestFitLineColor": "red", # line of best fit
-    "bestFitLineWidth": "2",
+    "bestPlotFitLineColor": "#f2a600", # line of best fit for the individual plot only
+    "bestPlotFitLineWidth": "1.4",
+    "bestOverallFitLineColor": "red", # line of best fit overall the entire rotation
+    "bestOverallFitLineWidth": "2",
     
 
     #plot properties
     "dataToPlot": ["U", "n", "ti", "B"],
+
+    #TODO: IMPLEMENT IMPORTANTPARAMS
+    "importantParams": ["U", "n"], # only include these params for best run calculation
+    
     "yLabels": ["U (km/s)", "Np (cm^-3)", "Temperature (K)", "B (nT)"],
     "isLogGraph": [False, False, True, False],
     "plotSaveFolder": "./output_plots", # where plot images should be saved

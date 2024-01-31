@@ -102,3 +102,42 @@ def findPlotOpacities(arr):
         opacities.append(maxOpacity - opacityStep * (rank - 1))
 
     return opacities
+
+def normalizeData(data):
+    """
+    REQUIRES:
+    - data: input data
+
+    EFFECTS: Normalizes each value in data as a proportion of the max value
+    """
+    return [x / max(data) for x in data]
+
+def calculate2DArrayAverage(arr):
+    """
+    REQUIRES:
+    - arr: input 2d array
+    Nested arrays MUST be of equal length!
+
+    EFFECTS: Averages all nested arrays in arr to form a single array
+    """
+    numRows = len(arr)
+    numCols = len(arr[0])
+
+    averages = [0] * numCols
+
+    for col in range(numCols):
+        colSum = sum(row[col] for row in arr)
+        averages[col] = colSum / numRows
+
+    return averages
+
+def indexOfMinValue(arr):
+    """
+    REQUIRES:
+    - arr: input array
+
+    EFFECTS: Returns index of min value in array
+    """
+    maxVal = min(arr)
+    maxIndex = arr.index(maxVal)
+    return maxIndex

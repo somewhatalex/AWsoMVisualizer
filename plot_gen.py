@@ -5,7 +5,7 @@ import numpy as np
 import os
 from scrape_data import scrapeData
 from datetime import datetime, timedelta
-from data_utils import mse, findPlotOpacities
+from data_utils import *
 
 def plotResults(plotRotation, rotationData, openPlotWindow = False):
     """
@@ -34,12 +34,15 @@ def plotResults(plotRotation, rotationData, openPlotWindow = False):
 
     simLines = [[] for i in range(len(dataToPlot))]
     mseValues = [[] for i in range(len(dataToPlot))]
+    simRunNames = []
     
     # loop through all sim runs in the rotation
     for runIter, run in enumerate(runResults):
         # sets start and end times for data scraping
         startTime = min(runResults[run]['timestamp']).strftime('%Y-%m-%d %H:%M:%S')
         endTime = max(runResults[run]['timestamp']).strftime('%Y-%m-%d %H:%M:%S')
+
+        simRunNames.append(run)
 
         # shifts the scraping timeframe back by 4.5 hours to account for delay in start/end of data collection vs sim timeframe
         startTimeDT = datetime.strptime(startTime, '%Y-%m-%d %H:%M:%S') - timedelta(hours = 4.5)
@@ -104,17 +107,34 @@ def plotResults(plotRotation, rotationData, openPlotWindow = False):
     for i, valueSet in enumerate(mseValues):
         opacityValues = findPlotOpacities(valueSet)
 
+        #normalizes mse values for the specific plot
+        mseValues[i] = normalizeData(valueSet)
+
         for j, line in enumerate(simLines[i]):
             opacity = opacityValues[j]
 
             if(opacity == 1):
-                line[0].set_color(configs["bestFitLineColor"])
-                line[0].set_linewidth(configs["bestFitLineWidth"])
+                line[0].set_color(configs["bestPlotFitLineColor"])
+                line[0].set_linewidth(configs["bestPlotFitLineWidth"])
                 line[0].set_zorder(len(simLines[i]) + 1) # move best fit line to front
 
             line[0].set_alpha(opacityValues[j])
     
+    #finds and plots overall best line
+    mseAverages = calculate2DArrayAverage(mseValues)
+    indexOfBestLine = indexOfMinValue(mseAverages)
+    for i in range(len(configs["dataToPlot"])):
+        bestOverallLine = simLines[i][indexOfBestLine][0]
+
+        bestOverallLine.set_color(configs["bestOverallFitLineColor"])
+        bestOverallLine.set_linewidth(configs["bestOverallFitLineWidth"])
+        bestOverallLine.set_zorder(len(simLines[i]) + 2) # move best fit line to front
+
+        bestOverallLine.set_alpha(1)
+    
     print(f"[Rotation = {plotRotation}] Plotted {len(dataToPlot)} quantities from {len(runResults)} simulation results.")
+    print(f"Best simulation run: {simRunNames[indexOfBestLine]}")
+    print("----------")
 
     # launches plot as new window if openPlotWindow is true
     # value passed by -showplot flag via cmd
