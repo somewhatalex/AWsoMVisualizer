@@ -141,3 +141,23 @@ def indexOfMinValue(arr):
     maxVal = min(arr)
     maxIndex = arr.index(maxVal)
     return maxIndex
+
+def filterDatasetByVarName(dataset, variables, varsToKeep):
+    """
+    REQUIRES:
+    - dataset: array of values
+    - variables: indices of variables MUST correlate to dataset
+        ie. dataset[2] is the value for variables[2]
+    - varsToKeep: variables whose corresponding value in dataset will be kept
+
+    EFFECTS: Returns [newVarList, filteredDataset] where the indices of
+    newVarList correspond to the items in filteredDataset
+    """
+    filteredDataset = []
+    newVarList = []
+
+    for i in range(len(varsToKeep)):
+        filteredDataset.append(dataset[variables.index(varsToKeep[i])])
+        newVarList.append(varsToKeep[i])
+
+    return [newVarList, filteredDataset]

@@ -68,6 +68,9 @@ for run in simFolders:
 
         simResults = parseSimRunResults(f"./{simDirectory}/{run}/{configs['simResultsLocation']}")
 
+        #add poynting flux as additional param to simResults
+        simResults["poyntingFlux"] = params["PoyntingFluxPerBSi"]
+
         #add folder and results to its corresponding rotation name key in rotationData
         if rotation in rotationData:
             #if the rotation already exists, do not create another rotation dict key

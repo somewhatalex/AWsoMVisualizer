@@ -12,26 +12,27 @@ configs = {
     "plotDimensions": [9, 7], #[width, height]
 
     "plotDataLineColor": "black", # "Data" refers to the scraped CDAS data plots
-    "plotDataLineWidth": "1.4",
+    "plotDataLineWidth": "1",
 
     "bestPlotFitLineColor": "#f2a600", # line of best fit for the individual plot only
     "bestPlotFitLineWidth": "1.4",
     "bestOverallFitLineColor": "red", # line of best fit overall the entire rotation
     "bestOverallFitLineWidth": "2",
     
-
     #plot properties
     "dataToPlot": ["U", "n", "ti", "B"],
-
-    #TODO: IMPLEMENT IMPORTANTPARAMS
     "importantParams": ["U", "n"], # only include these params for best run calculation
-    
     "yLabels": ["U (km/s)", "Np (cm^-3)", "Temperature (K)", "B (nT)"],
+    "paramMaxValues": [1000, 100, 10**7, 25], # the graph gets cut off above these values
     "isLogGraph": [False, False, True, False],
     "plotSaveFolder": "./output_plots", # where plot images should be saved
 
     #scraping configs
-    "varsToScrape": ["V", "N", "T", "ABS_B"] # NOTE: vars must match corresponding variables in "dataToPlot"
+    "varsToScrape": ["V", "N", "T", "ABS_B"], # NOTE: vars must match corresponding variables in "dataToPlot"
+    
+    #poynting flux vs mse plot properties
+    "msePlotColor": "blue",
+    "mseBestPointColor": "red"
 }
 
 #constants

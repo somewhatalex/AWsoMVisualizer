@@ -6,6 +6,7 @@ import os
 from scrape_data import scrapeData
 from datetime import datetime, timedelta
 from data_utils import *
+from plot_gen_poyntingflux import *
 
 def plotResults(plotRotation, rotationData, openPlotWindow = False):
     """
@@ -16,6 +17,8 @@ def plotResults(plotRotation, rotationData, openPlotWindow = False):
 
     EFFECTS: plots variables in rotationData (specified in config_local),
     saves plots to plotSaveFolder (also specified in config_local)
+
+    Plots one rotation at a time.
 
     NOTE: Plot params and appearance can be configured in config_local
     """
@@ -32,9 +35,25 @@ def plotResults(plotRotation, rotationData, openPlotWindow = False):
     # plt.figure resets the plot so each function call works on a clean slate
     plt.figure(figsize = configs['plotDimensions'])
 
-    simLines = [[] for i in range(len(dataToPlot))]
+    # the indices for each array are the same for each plot
+    # ie. simLines[1] has the run name at simRunNames[1]
+    simLines = [[] for i in range(len(dataToPlot))] # contains data for each line in the plot
     mseValues = [[] for i in range(len(dataToPlot))]
     simRunNames = []
+    poyntingFluxes = []
+
+    #TODO: replace above arrays with structured dict
+    # plotData Structure:
+    # Var1
+    # |-- simLines
+    # |-- mseValues
+    # |-- simRunNames
+    # |-- poyntingFluxes
+    # Var2
+    # |-- simLines ...
+    #
+    # All subkeys are arrays with indices that correspond to each other
+    plotData = dict()
     
     # loop through all sim runs in the rotation
     for runIter, run in enumerate(runResults):
@@ -43,6 +62,7 @@ def plotResults(plotRotation, rotationData, openPlotWindow = False):
         endTime = max(runResults[run]['timestamp']).strftime('%Y-%m-%d %H:%M:%S')
 
         simRunNames.append(run)
+        poyntingFluxes.append(runResults[run]["poyntingFlux"])
 
         # shifts the scraping timeframe back by 4.5 hours to account for delay in start/end of data collection vs sim timeframe
         startTimeDT = datetime.strptime(startTime, '%Y-%m-%d %H:%M:%S') - timedelta(hours = 4.5)
@@ -79,7 +99,8 @@ def plotResults(plotRotation, rotationData, openPlotWindow = False):
             # and create a plot with multiple lines
             simTimestamps = runResults[run]["timestamp"]
             simValues = runResults[run][data]
-            simLines[i].append(plt.plot(np.array(simTimestamps), np.array(simValues), c = configs['plotSimLineColor'], linewidth = configs['plotSimLineWidth']))
+            currentSimLine = plt.plot(np.array(simTimestamps), np.array(simValues), c = configs['plotSimLineColor'], linewidth = configs['plotSimLineWidth'])
+            simLines[i].append(currentSimLine)
 
             #dataVar contains the current scraped variable being plotted
             dataVar = configs["varsToScrape"][i]
@@ -101,13 +122,31 @@ def plotResults(plotRotation, rotationData, openPlotWindow = False):
             dataTimestamps = [int(datetime.strptime(ts, '%Y-%m-%dT%H:%M:%S').timestamp()) for ts in dataTimestamps]
             
             #calculate mean squared error
-            mseValues[i].append(mse(simTimestamps, simValues, dataTimestamps, dataValues))
+            lineMseValue = mse(simTimestamps, simValues, dataTimestamps, dataValues)
+            mseValues[i].append(lineMseValue)
 
+            #save values to plotData dict
+            #TODO: reformat old code to accept the new data format and delete legacy arrays
+            #NOTE: until then, this code has no purpose
+            if data not in plotData:
+                plotData[data] = {
+                    "simLines": [],
+                    "mseValues": [],
+                    "simRunNames": [],
+                    "poyntingFluxes": [],
+                }
+            
+            currentPlotData = plotData[data]
+            currentPlotData["simLines"].append(currentSimLine)
+            currentPlotData["mseValues"].append(lineMseValue)
+            currentPlotData["simRunNames"].append(run)
+            currentPlotData["poyntingFluxes"].append(runResults[run]["poyntingFlux"])
+    
     # calculates line opacities and line of best fit
     for i, valueSet in enumerate(mseValues):
         opacityValues = findPlotOpacities(valueSet)
 
-        #normalizes mse values for the specific plot
+        # normalizes mse values for the specific plot
         mseValues[i] = normalizeData(valueSet)
 
         for j, line in enumerate(simLines[i]):
@@ -120,9 +159,22 @@ def plotResults(plotRotation, rotationData, openPlotWindow = False):
 
             line[0].set_alpha(opacityValues[j])
     
-    #finds and plots overall best line
+    # only keep important param mse data in mseValues (other params will be ignore in calculation)
+    mseValues = filterDatasetByVarName(mseValues, configs["dataToPlot"], configs["importantParams"])[1]
+
+    # finds and plots overall best line
     mseAverages = calculate2DArrayAverage(mseValues)
     indexOfBestLine = indexOfMinValue(mseAverages)
+
+    # sets maximum y-axis data cutoff
+    axes = plt.gcf().get_axes()
+    for i, ax in enumerate(axes):
+        originalYLim = ax.get_ylim()
+        maxYAxis = configs["paramMaxValues"][i]
+        if maxYAxis != None:
+            if originalYLim[1] > maxYAxis:
+                ax.set_ylim(originalYLim[0], maxYAxis)
+    
     for i in range(len(configs["dataToPlot"])):
         bestOverallLine = simLines[i][indexOfBestLine][0]
 
@@ -132,9 +184,11 @@ def plotResults(plotRotation, rotationData, openPlotWindow = False):
 
         bestOverallLine.set_alpha(1)
     
+    bestRunName = simRunNames[indexOfBestLine]
+    bestPoyntingFlux = runResults[bestRunName]["poyntingFlux"]
+
     print(f"[Rotation = {plotRotation}] Plotted {len(dataToPlot)} quantities from {len(runResults)} simulation results.")
-    print(f"Best simulation run: {simRunNames[indexOfBestLine]}")
-    print("----------")
+    print(f"Best simulation run: {bestRunName} (poyntingFlux = {bestPoyntingFlux})")
 
     # launches plot as new window if openPlotWindow is true
     # value passed by -showplot flag via cmd
@@ -142,3 +196,9 @@ def plotResults(plotRotation, rotationData, openPlotWindow = False):
         plt.show()
 
     plt.savefig(f"{plotSaveDirectory}/{plotRotation}.png", dpi = 300)
+    plt.close()
+    
+    # Plot poynting flux value vs mse
+    plotPoyntingFluxGraph(mseAverages, plotData[next(iter(plotData))]["poyntingFluxes"], plotRotation, plotSaveDirectory, openPlotWindow)
+    
+    print("----------")
