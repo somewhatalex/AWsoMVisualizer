@@ -199,6 +199,6 @@ def plotResults(plotRotation, rotationData, openPlotWindow = False):
     plt.close()
     
     # Plot poynting flux value vs mse
-    plotPoyntingFluxGraph(mseAverages, plotData[next(iter(plotData))]["poyntingFluxes"], plotRotation, plotSaveDirectory, openPlotWindow)
+    plotPoyntingFluxGraph(mseAverages, mseValues, plotData[next(iter(plotData))]["poyntingFluxes"], plotRotation, plotSaveDirectory, openPlotWindow)
     
     print("----------")
