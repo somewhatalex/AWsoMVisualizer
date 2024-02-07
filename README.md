@@ -1,19 +1,31 @@
 # AWsoMVisualizer
-**An AWsoM Solar Wind Simulation Result Vizualization Tool**
+**An AWsoM Solar Wind Simulation Result Visualization Tool**
+
+![Example plot](./examples/AVPreviewLogo.png)
+
+## About
+This utility can plot and visualize simulation data from the AWsoM Solar Wind Model. It is able to create plots for several variables on hundreds of simulation runs at once and compare them to real OMNI observation data from [NASA's CDAWeb](https://cdaweb.gsfc.nasa.gov/).
 
 ![Example plot](./examples/20120516.png)
 
-## About
-This utility can plot and visualize simulation data from the AWsoM Solar Wind Model. It is able to create plots for several variables on hundreds of simulation runs at once and compare them to real data from [NASA's CDAWeb](https://cdaweb.gsfc.nasa.gov/).
+Additionally, analysis plots that show the best Poynting Flux parameter value for different Carrington rotation simulation runs will also be generated.
 
-Additionally, analysis plots that show the best Poynting Flux parameter value for different Carrington rotation simulation runs will also be generated. The best run results for each rotation are calculated by the following steps:
+![Example plot](./examples/20110201_result.png)
+
+The best run results for each rotation are calculated by the following steps:
 1. The simulation data is interpolated onto the actual data.
-2. Mean squared error (MSE) for each run is calculated between the simulation and actual data.
-3. The important parameters sepcified in config_local.py are used to find overall MSE values for each run across variables.
+2. Mean squared error (MSE) for each run is calculated between the simulation and actual data. MSE values are normalized in each subplot for consistent comparison.
+3. The important parameters specified in config_local.py are used to find overall MSE values for each run across variables.
 4. The simulation runs are ranked by MSE values and the lowest MSE value run is determined.
 
 ## Setup
-To setup, please install the following Python libraries. You should also have [Python 3.12](https://www.python.org/downloads/) or higher installed.
+To setup, first make a copy of the repository:
+
+```
+git clone https://github.com/somewhatalex/AWsoMVisualizer.git
+```
+
+Next, please install the following Python libraries. You should also have [Python 3.12](https://www.python.org/downloads/) or higher installed.
 ```
 pip install -u xarray cdflib cdasws matplotlib numpy
 ```
@@ -27,6 +39,8 @@ To run the program:
 python plot_simulation.py
 ```
 
+All plots will be saved to your device in the folders specified via [config_local.py](config_local.py). The preset is `./output_plots`.
+
 ### Program Flags
 | Option     | Description                                       |
 |------------|---------------------------------------------------|
@@ -34,4 +48,4 @@ python plot_simulation.py
 | -t       | Specify rotation date to plot (ex. 20120516)                     |
 | -sp     | Set  simulation path, default is ./simulations  |
 | -o       | Set folder to output plots, default is ./output_plots|
-| -showplot  | Opens graph as a new window when script finishes  |
+| -showplot  | Opens graph(s) as a new window when script finishes  |
