@@ -47,7 +47,7 @@ def plotPoyntingFluxGraph(avgMseValues, allMseData, poyntingFluxValues, rotation
         ax.set_ylabel(f"MSE Value ({configs['importantParams'][i]})")
 
         plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
-        plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
+        plt.gca().yaxis.set_major_locator(MaxNLocator(nbins=configs["mseValueBins"]))
     
     #plots overall average MSE values in last subplot
     plt.subplot(len(allMseData) + 1, 1, len(allMseData) + 1)
@@ -68,7 +68,7 @@ def plotPoyntingFluxGraph(avgMseValues, allMseData, poyntingFluxValues, rotation
     plt.grid(True, linestyle = "--", alpha = 0.5)
 
     plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
-    plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
+    plt.gca().yaxis.set_major_locator(MaxNLocator(nbins=configs["mseValueBins"]))
     
     if showPlots:
         plt.show()

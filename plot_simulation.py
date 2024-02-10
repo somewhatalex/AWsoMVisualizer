@@ -11,6 +11,8 @@ simDirectory = configs["simDirectory"]
 #NOTE: configs["plotSaveFolder"] must be accessed directly in this file so it can be overriden by cmd arguments
 #This value is then used in different modules
 
+print(f"Indexing data from {simDirectory} ...")
+
 #parses user command line input with flags
 plotRotation = ""
 if __name__ == "__main__":

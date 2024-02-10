@@ -32,7 +32,8 @@ configs = {
     
     #poynting flux vs mse plot properties
     "msePlotColor": "blue",
-    "mseBestPointColor": "red"
+    "mseBestPointColor": "red",
+    "mseValueBins": 7 # number of tick marks on y axis of poynting flux plot
 }
 
 #constants
