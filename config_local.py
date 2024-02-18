@@ -30,10 +30,11 @@ configs = {
     #scraping configs
     "varsToScrape": ["V", "N", "T", "ABS_B"], # NOTE: vars must match corresponding variables in "dataToPlot"
     
-    #poynting flux vs mse plot properties
-    "msePlotColor": "blue",
-    "mseBestPointColor": "red",
-    "mseValueBins": 7 # number of tick marks on y axis of poynting flux plot
+    #poynting flux vs difference from actual plot properties
+    "diffPlotColor": "blue",
+    "diffBestPointColor": "red",
+    "diffValueBins": 7, # number of tick marks on y axis of poynting flux plot
+    "diffCalcMethod": "mse"
 }
 
 #constants

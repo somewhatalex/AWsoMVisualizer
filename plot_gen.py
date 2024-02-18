@@ -38,7 +38,7 @@ def plotResults(plotRotation, rotationData, openPlotWindow = False):
     # the indices for each array are the same for each plot
     # ie. simLines[1] has the run name at simRunNames[1]
     simLines = [[] for i in range(len(dataToPlot))] # contains data for each line in the plot
-    mseValues = [[] for i in range(len(dataToPlot))]
+    diffValues = [[] for i in range(len(dataToPlot))]
     simRunNames = []
     poyntingFluxes = []
 
@@ -46,7 +46,7 @@ def plotResults(plotRotation, rotationData, openPlotWindow = False):
     # plotData Structure:
     # Var1
     # |-- simLines
-    # |-- mseValues
+    # |-- diffValues
     # |-- simRunNames
     # |-- poyntingFluxes
     # Var2
@@ -114,16 +114,16 @@ def plotResults(plotRotation, rotationData, openPlotWindow = False):
             if runIter == len(runResults) - 1:
                 plt.plot(np.array(dataTimestamps), np.array(dataValues), c = configs["plotDataLineColor"], linewidth = configs["plotDataLineWidth"])
 
-            #--MSE CALCULATION--
-            #normalize timestamps into int format (for calculating mean squared error)
+            #--DIFF CALCULATION--
+            #normalize timestamps into int format (for calculatinglline differences)
             simTimestamps = [int(dt.timestamp()) for dt in simTimestamps]
             dataTimestamps = dataTimestamps.astype(str)
             dataTimestamps = [ts.split(".")[0] for ts in dataTimestamps] #removes unnecessary subsecond precision
             dataTimestamps = [int(datetime.strptime(ts, '%Y-%m-%dT%H:%M:%S').timestamp()) for ts in dataTimestamps]
             
-            #calculate mean squared error
-            lineMseValue = mse(simTimestamps, simValues, dataTimestamps, dataValues)
-            mseValues[i].append(lineMseValue)
+            #calculate difference with given method
+            lineDiffValue = difference_sim_obs(simTimestamps, simValues, dataTimestamps, dataValues, configs["diffCalcMethod"])
+            diffValues[i].append(lineDiffValue)
 
             #save values to plotData dict
             #TODO: reformat old code to accept the new data format and delete legacy arrays
@@ -131,23 +131,23 @@ def plotResults(plotRotation, rotationData, openPlotWindow = False):
             if data not in plotData:
                 plotData[data] = {
                     "simLines": [],
-                    "mseValues": [],
+                    "diffValues": [],
                     "simRunNames": [],
                     "poyntingFluxes": [],
                 }
             
             currentPlotData = plotData[data]
             currentPlotData["simLines"].append(currentSimLine)
-            currentPlotData["mseValues"].append(lineMseValue)
+            currentPlotData["diffValues"].append(lineDiffValue)
             currentPlotData["simRunNames"].append(run)
             currentPlotData["poyntingFluxes"].append(runResults[run]["poyntingFlux"])
     
     # calculates line opacities and line of best fit
-    for i, valueSet in enumerate(mseValues):
+    for i, valueSet in enumerate(diffValues):
         opacityValues = findPlotOpacities(valueSet)
 
-        # normalizes mse values for the specific plot
-        mseValues[i] = normalizeData(valueSet)
+        # normalizes line difference values for the specific plot
+        diffValues[i] = normalizeData(valueSet)
 
         for j, line in enumerate(simLines[i]):
             opacity = opacityValues[j]
@@ -159,12 +159,12 @@ def plotResults(plotRotation, rotationData, openPlotWindow = False):
 
             line[0].set_alpha(opacityValues[j])
     
-    # only keep important param mse data in mseValues (other params will be ignore in calculation)
-    mseValues = filterDatasetByVarName(mseValues, configs["dataToPlot"], configs["importantParams"])[1]
+    # only keep important param difference value data in diffValues (other params will be ignore in calculation)
+    diffValues = filterDatasetByVarName(diffValues, configs["dataToPlot"], configs["importantParams"])[1]
 
     # finds and plots overall best line
-    mseAverages = calculate2DArrayAverage(mseValues)
-    indexOfBestLine = indexOfMinValue(mseAverages)
+    diffAverages = calculate2DArrayAverage(diffValues)
+    indexOfBestLine = indexOfMinValue(diffAverages)
 
     # sets maximum y-axis data cutoff
     axes = plt.gcf().get_axes()
@@ -198,7 +198,7 @@ def plotResults(plotRotation, rotationData, openPlotWindow = False):
     plt.savefig(f"{plotSaveDirectory}/{plotRotation}.png", dpi = 300)
     plt.close()
     
-    # Plot poynting flux value vs mse
-    plotPoyntingFluxGraph(mseAverages, mseValues, plotData[next(iter(plotData))]["poyntingFluxes"], plotRotation, plotSaveDirectory, openPlotWindow)
+    # Plot poynting flux value vs difference in lines
+    plotPoyntingFluxGraph(diffAverages, diffValues, plotData[next(iter(plotData))]["poyntingFluxes"], plotRotation, plotSaveDirectory, openPlotWindow)
     
     print("----------")

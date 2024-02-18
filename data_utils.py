@@ -24,20 +24,31 @@ def multiplyArr(arr, constant):
 
     return arr
 
-def mse(simTimestamps, simValues, dataTimestamps, dataValues):
+def difference_sim_obs(simTimestamps, simValues, dataTimestamps, dataValues, method = "pcc"):
     """
-    Calculates mean squared error
+    Calculates difference between sim and obs results using given method
 
     NOTE: timestamps must be converted to int format
 
     REQUIRES:
     - simTimestamps, simValues: arrays with simulation timestamps and values
     - dataTimestamps, dataValues: arrays with data timestamps and values
-
+    - method: method to use (see METHODS)
+    
     EFFECTS: returns value of mean squared error between the two datasets
+    
+    -- METHODS --
+    mse: mean squared error (default)
+    mae: mean absolute error
+    pcc: pearson correlation coefficient (see NOTES)
+    curve_distance: curve distance
+    
+    -- NOTES -- 
+    - pcc: modified so that negative/positive correlation is ignored and the values are inverted so that 
+    the best line is closest to 0 and the worst is closest to 1
     """
     
-    # replace all nan values in original data with 0
+    # removes all timestamps with no observation data (NaN)
     nanMask = ~np.isnan(dataValues)
     dataValues = np.array(dataValues)
     dataTimestamps = np.array(dataTimestamps)
@@ -46,12 +57,49 @@ def mse(simTimestamps, simValues, dataTimestamps, dataValues):
 
     interpSimValues = interpolate(dataTimestamps, simTimestamps, simValues)
 
-    # calculate mse
-    n = len(dataTimestamps)
-    squaredDiff = [(actual - predicted)**2 for actual, predicted in zip(dataValues, interpSimValues)]
-    mse = sum(squaredDiff) / n
+    if method == "mae":
+        # mean squared error
+        n = len(dataTimestamps)
+        squaredDiff = [np.abs(actual - predicted) for actual, predicted in zip(dataValues, interpSimValues)]
+        mse = sum(squaredDiff) / n
 
-    return mse
+        return mse
+    elif method == "pcc":
+        # modified pearson correlation coefficient
+        # NOTE: negative/positive correlation is ignored and the values are inverted so that
+        # the best line is closest to 0 and the worst is closest to 1
+        x = dataValues
+        y = interpSimValues
+        
+        mean_x = np.mean(x)
+        mean_y = np.mean(y)
+        
+        covariance = np.sum((x - mean_x) * (y - mean_y))
+        
+        std_dev_x = np.sqrt(np.sum((x - mean_x) ** 2))
+        std_dev_y = np.sqrt(np.sum((y - mean_y) ** 2))
+        
+        # Calculate pcc
+        pearson_correlation = 1 - np.abs(covariance / (std_dev_x * std_dev_y))
+        
+        return pearson_correlation
+    elif method == "curve_distance":
+        # curve distance
+        n = len(dataTimestamps)
+        squaredDiffA = [abs(actual - predicted) for actual, predicted in zip(dataValues, interpSimValues)]
+        curveDistA = sum(squaredDiffA)
+        
+        squaredDiffB = [abs(actual - predicted) for actual, predicted in zip(dataValues, interpSimValues)]
+        curveDistB = sum(squaredDiffB)
+
+        return max([curveDistA, curveDistB])
+    else:
+        # mean squared error
+        n = len(dataTimestamps)
+        squaredDiff = [(actual - predicted)**2 for actual, predicted in zip(dataValues, interpSimValues)]
+        mse = sum(squaredDiff) / n
+
+        return mse
 
 def interpolate(x1, x2, y2):
     """
