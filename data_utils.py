@@ -1,6 +1,7 @@
 import math
 import numpy as np
 from config_local import *
+from scipy.stats import spearmanr
 
 def magnitude(arr):
     """
@@ -24,7 +25,7 @@ def multiplyArr(arr, constant):
 
     return arr
 
-def difference_sim_obs(simTimestamps, simValues, dataTimestamps, dataValues, method = "pcc"):
+def difference_sim_obs(simTimestamps, simValues, dataTimestamps, dataValues, method):
     """
     Calculates difference between sim and obs results using given method
 
@@ -40,12 +41,8 @@ def difference_sim_obs(simTimestamps, simValues, dataTimestamps, dataValues, met
     -- METHODS --
     mse: mean squared error (default)
     mae: mean absolute error
-    pcc: pearson correlation coefficient (see NOTES)
+    scc: spearman correlation coefficient
     curve_distance: curve distance
-    
-    -- NOTES -- 
-    - pcc: modified so that negative/positive correlation is ignored and the values are inverted so that 
-    the best line is closest to 0 and the worst is closest to 1
     """
     
     # removes all timestamps with no observation data (NaN)
@@ -58,31 +55,17 @@ def difference_sim_obs(simTimestamps, simValues, dataTimestamps, dataValues, met
     interpSimValues = interpolate(dataTimestamps, simTimestamps, simValues)
 
     if method == "mae":
-        # mean squared error
+        # mean absolute error
         n = len(dataTimestamps)
         squaredDiff = [np.abs(actual - predicted) for actual, predicted in zip(dataValues, interpSimValues)]
         mse = sum(squaredDiff) / n
 
         return mse
-    elif method == "pcc":
-        # modified pearson correlation coefficient
-        # NOTE: negative/positive correlation is ignored and the values are inverted so that
-        # the best line is closest to 0 and the worst is closest to 1
-        x = dataValues
-        y = interpSimValues
+    elif method == "scc":
+        # spearman correlation coefficient
+        scc, pvalue = spearmanr(dataValues, interpSimValues)
         
-        mean_x = np.mean(x)
-        mean_y = np.mean(y)
-        
-        covariance = np.sum((x - mean_x) * (y - mean_y))
-        
-        std_dev_x = np.sqrt(np.sum((x - mean_x) ** 2))
-        std_dev_y = np.sqrt(np.sum((y - mean_y) ** 2))
-        
-        # Calculate pcc
-        pearson_correlation = 1 - np.abs(covariance / (std_dev_x * std_dev_y))
-        
-        return pearson_correlation
+        return scc
     elif method == "curve_distance":
         # curve distance
         n = len(dataTimestamps)
@@ -127,6 +110,9 @@ def findPlotOpacities(arr):
     arr[np.isnan(arr)] = -np.inf
 
     # get indices that would sort the array
+    if configs["diffCalcMethod"] == "scc": # spearman cc has highest rank when closest to 1/-1
+        arr = 1 - np.abs(arr)
+
     sorted_indices = np.argsort(arr)
 
     # create array of ranks based on the sorted indices
@@ -158,6 +144,9 @@ def normalizeData(data):
 
     EFFECTS: Normalizes each value in data as a proportion of the max value
     """
+    if configs["diffCalcMethod"] == "scc": # spearman cc should NOT be normalized
+        return data
+    
     return [x / max(data) for x in data]
 
 def calculate2DArrayAverage(arr):
@@ -170,6 +159,9 @@ def calculate2DArrayAverage(arr):
     """
     numRows = len(arr)
     numCols = len(arr[0])
+    
+    if configs["diffCalcMethod"] == "scc": # normalizes spearman cc so best has lowest val and worst has highest
+        arr =  1 - np.abs(arr)
 
     averages = [0] * numCols
 
@@ -186,9 +178,12 @@ def indexOfMinValue(arr):
 
     EFFECTS: Returns index of min value in array
     """
-    maxVal = min(arr)
-    maxIndex = arr.index(maxVal)
-    return maxIndex
+    if configs["diffCalcMethod"] == "scc": # normalizes spearman cc so best has lowest val and worst has highest
+        arr = [1 - abs(val) for val in arr]
+        
+    minVal = min(arr)
+    minIndex = arr.index(minVal)
+    return minIndex
 
 def filterDatasetByVarName(dataset, variables, varsToKeep):
     """

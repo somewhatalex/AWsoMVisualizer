@@ -14,9 +14,9 @@ Additionally, analysis plots that show the best Poynting Flux parameter value fo
 
 The best run results for each rotation are calculated by the following steps:
 1. The simulation data is interpolated onto the actual data.
-2. Mean squared error (MSE) for each run is calculated between the simulation and actual data. MSE values are normalized in each subplot for consistent comparison.
-3. The important parameters specified in config_local.py are used to find overall MSE values for each run across variables.
-4. The simulation runs are ranked by MSE values and the lowest MSE value run is determined.
+2. The difference (see [difference calculation methods](#difference-calculation-methods)) for each run is calculated between the simulation and actual data. Difference values are normalized in each subplot for consistent comparison.
+3. The important parameters specified in config_local.py are used to find overall difference values for each run across variables.
+4. The simulation runs are ranked by difference values and the lowest difference value run is determined.
 
 ## Setup
 To setup, first make a copy of the repository:
@@ -27,7 +27,7 @@ git clone https://github.com/somewhatalex/AWsoMVisualizer.git
 
 Next, please install the following Python libraries. You should also have [Python 3.12](https://www.python.org/downloads/) or higher installed.
 ```
-pip install -u xarray cdflib cdasws matplotlib numpy
+pip install -u xarray cdflib cdasws matplotlib numpy scipy
 ```
 Customizable user preferences can be found in [config_local.py](config_local.py). "config_local.py" contains a Python dict of editable values. The presets can be edited before running the program.
 
@@ -49,3 +49,12 @@ All plots will be saved to your device in the folders specified via [config_loca
 | -sp     | Set  simulation path, default is ./simulations  |
 | -o       | Set folder to output plots, default is ./output_plots|
 | -showplot  | Opens graph(s) as a new window when script finishes  |
+| -m  | Specifies method to calculate difference between sim and actual data, default is "mse"  |
+
+### Difference Calculation Methods
+| -m [input]     | Description                                       |
+|------------|---------------------------------------------------|
+| mse | Mean squared error |
+| mae | Mean absolute error |
+| curve_distance | Curve distance  |
+| scc | Spearman correlation coefficient  |

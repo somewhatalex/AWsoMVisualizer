@@ -22,6 +22,7 @@ if __name__ == "__main__":
     parser.add_argument("-sp", help = "Enter simulation path, default is " + simDirectory)
     parser.add_argument("-o", help = "Folder to output plots, default is " + configs["plotSaveFolder"])
     parser.add_argument("-showplot", action = "store_true", help = "Opens graph as new window when the script finishes")
+    parser.add_argument("-m", help = "Method to calc between actual and sim data [mae, scc, curve_distance, mse]. Default: " + configs["diffCalcMethod"])
 
     #parse resulting args
     args = parser.parse_args()
@@ -35,6 +36,10 @@ if __name__ == "__main__":
     #overrides default config value if output folder location is specified via cmd
     if args.o is not None:
         configs["plotSaveFolder"] = args.o
+        
+    #overrides default config value if data difference calc method is specified via cmd
+    if args.m is not None:
+        configs["diffCalcMethod"] = args.m
 
 #validates user configs and input
 if not os.path.isdir(simDirectory):

@@ -35,7 +35,7 @@ def plotPoyntingFluxGraph(avgDiffValues, allDiffData, poyntingFluxValues, rotati
         if i == 0:
             plt.title(f"Correlation between Poynting Flux and Simulation Accuracy For Rotation {rotation}")
         
-        minIndex = np.argmin(data)
+        minIndex = indexOfMinValue(data)
         
         plt.text(0.5, 0.95, f"Best: {poyntingFluxValues[minIndex]} (Diff={round(np.min(data), 6)})", transform=plt.gca().transAxes, fontsize=10, ha='center', va='top')
         
@@ -53,7 +53,7 @@ def plotPoyntingFluxGraph(avgDiffValues, allDiffData, poyntingFluxValues, rotati
     plt.subplot(len(allDiffData) + 1, 1, len(allDiffData) + 1)
     
     #sets min point to a different color
-    minIndex = np.argmin(avgDiffValues)
+    minIndex = indexOfMinValue(avgDiffValues)
     plotColors = [configs["diffBestPointColor"] if i == minIndex else configs["diffPlotColor"] for i in range(len(avgDiffValues))]
 
     plt.plot(poyntingFluxValues, avgDiffValues, color = configs["diffPlotColor"])
