@@ -25,6 +25,45 @@ def multiplyArr(arr, constant):
 
     return arr
 
+class datafile:
+    """
+    Manages output file generation. Output files include rows of data (usually differences)
+    """
+    rotationFile = ""
+    
+    def __init__(self, rotationFile):
+        self.rotationFile = configs["outputDataFolder"] + "/" + rotationFile
+        self.clear()
+    
+    def clear(self):
+        with open(self.rotationFile + '.txt', 'w') as file:
+            pass
+
+    def add(self, content):
+        with open(self.rotationFile + '.txt', 'a') as file:
+            file.write(str(content) + " ")
+            
+    def newLine(self):
+        with open(self.rotationFile + '.txt', 'rb+') as file:
+            file.seek(0, 2)
+            if file.tell() == 0:
+                return
+            file.seek(-1, 2)
+            if file.read(1) == b' ':
+                file.seek(-1, 2)
+                file.truncate()
+                file.write(b'\n')
+    
+    def close(self):
+        with open(self.rotationFile + '.txt', 'rb+') as file:
+            file.seek(0, 2)
+            if file.tell() == 0:
+                return
+            file.seek(-1, 2)
+            if file.read(1) == b' ' or file.read(1) == b'\n':
+                file.seek(-1, 2)
+                file.truncate()
+
 def difference_sim_obs(simTimestamps, simValues, dataTimestamps, dataValues, method):
     """
     Calculates difference between sim and obs results using given method
@@ -36,7 +75,7 @@ def difference_sim_obs(simTimestamps, simValues, dataTimestamps, dataValues, met
     - dataTimestamps, dataValues: arrays with data timestamps and values
     - method: method to use (see METHODS)
     
-    EFFECTS: returns value of mean squared error between the two datasets
+    EFFECTS: returns value of difference between the two datasets
     
     -- METHODS --
     mse: mean squared error (default)
@@ -67,15 +106,42 @@ def difference_sim_obs(simTimestamps, simValues, dataTimestamps, dataValues, met
         
         return scc
     elif method == "curve_distance":
-        # curve distance
-        n = len(dataTimestamps)
-        squaredDiffA = [abs(actual - predicted) for actual, predicted in zip(dataValues, interpSimValues)]
-        curveDistA = sum(squaredDiffA)
+        L1 = max(dataTimestamps) - min(dataTimestamps)
         
-        squaredDiffB = [abs(actual - predicted) for actual, predicted in zip(dataValues, interpSimValues)]
-        curveDistB = sum(squaredDiffB)
-
-        return max([curveDistA, curveDistB])
+        # D 1, 2
+        # Precompute the array of points for interpSimValues
+        interp_points = np.array([(dataTimestamps[j], point2) for j, point2 in enumerate(interpSimValues)])
+        
+        total_distance_1 = 0.0
+        
+        # Vectorize the distance calculations
+        for i, point1 in enumerate(dataValues):
+            point1_array = np.array([dataTimestamps[i], point1])
+            distances = np.linalg.norm(interp_points - point1_array, axis=1)
+            min_distance = np.min(distances)
+            total_distance_1 += min_distance
+        
+        total_distance_1 = total_distance_1 / L1
+            
+        # flip to get D 2, 1
+        temp = interpSimValues
+        interpSimValues = dataValues
+        dataValues = temp
+        
+        interp_points = np.array([(dataTimestamps[j], point2) for j, point2 in enumerate(interpSimValues)])
+        
+        total_distance_2 = 0.0
+        
+        # Vectorize the distance calculations
+        for i, point1 in enumerate(dataValues):
+            point1_array = np.array([dataTimestamps[i], point1])
+            distances = np.linalg.norm(interp_points - point1_array, axis=1)
+            min_distance = np.min(distances)
+            total_distance_2 += min_distance
+        
+        total_distance_2 = total_distance_2 / L1
+        
+        return (total_distance_1 + total_distance_2) / L1
     else:
         # mean squared error
         n = len(dataTimestamps)
@@ -147,7 +213,10 @@ def normalizeData(data):
     if configs["diffCalcMethod"] == "scc": # spearman cc should NOT be normalized
         return data
     
-    return [x / max(data) for x in data]
+    minValue = min(data)
+    maxValue = max(data)
+    
+    return [(x - minValue) / (maxValue - minValue) for x in data]
 
 def calculate2DArrayAverage(arr):
     """

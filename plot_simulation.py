@@ -45,6 +45,12 @@ if __name__ == "__main__":
 if not os.path.isdir(simDirectory):
     raise FileNotFoundError(f"Directory \"{simDirectory}\" wasn't found.")
 
+# sets up data output folder
+outputDataFolder = configs["outputDataFolder"]
+if not os.path.exists(outputDataFolder):
+    os.makedirs(outputDataFolder)
+    print(f"Created data output folder at {outputDataFolder}")
+
 #simFolders is a list of all runs' folders
 simFolders = [name for name in os.listdir(simDirectory) if os.path.isdir(os.path.join(simDirectory, name))]
 

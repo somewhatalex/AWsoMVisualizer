@@ -25,6 +25,10 @@ def plotResults(plotRotation, rotationData, openPlotWindow = False):
     plotSaveDirectory = configs["plotSaveFolder"]
     runResults = rotationData[plotRotation]
     dataToPlot = configs["dataToPlot"]
+    
+    dataFile = datafile(plotRotation)
+    dataFile.add("Poynting_flux Dist_U Dist_N Dist_T Dist_B ave_un")
+    dataFile.newLine()
 
     # sets up output folder (specified in config_local)
     if not os.path.exists(plotSaveDirectory):
@@ -158,12 +162,26 @@ def plotResults(plotRotation, rotationData, openPlotWindow = False):
                 line[0].set_zorder(len(simLines[i]) + 1) # move best fit line to front
 
             line[0].set_alpha(opacityValues[j])
-    
+            
     # only keep important param difference value data in diffValues (other params will be ignore in calculation)
-    diffValues = filterDatasetByVarName(diffValues, configs["dataToPlot"], configs["importantParams"])[1]
+    filteredDiffValues = filterDatasetByVarName(diffValues, configs["dataToPlot"], configs["importantParams"])[1]        
+    
+    # send data to text output file
+    for i, val in enumerate(diffValues[0]):
+        # consistent poynting flux values across all variables
+        dataFile.add(plotData[configs["dataToPlot"][0]]["poyntingFluxes"][i])
+        for valueSet in diffValues:
+            dataFile.add(round(valueSet[i], 3))
+        
+        filteredDiffAvg = 0
+        for valueSet in filteredDiffValues:
+            filteredDiffAvg += valueSet[i]
+            
+        dataFile.add(round(filteredDiffAvg / len(filteredDiffValues), 3))
+        dataFile.newLine()
 
     # finds and plots overall best line
-    diffAverages = calculate2DArrayAverage(diffValues)
+    diffAverages = calculate2DArrayAverage(filteredDiffValues)
     indexOfBestLine = indexOfMinValue(diffAverages)
 
     # sets maximum y-axis data cutoff
@@ -199,6 +217,8 @@ def plotResults(plotRotation, rotationData, openPlotWindow = False):
     plt.close()
     
     # Plot poynting flux value vs difference in lines
-    plotPoyntingFluxGraph(diffAverages, diffValues, plotData[next(iter(plotData))]["poyntingFluxes"], plotRotation, plotSaveDirectory, openPlotWindow)
+    plotPoyntingFluxGraph(diffAverages, filteredDiffValues, plotData[next(iter(plotData))]["poyntingFluxes"], plotRotation, plotSaveDirectory, openPlotWindow)
+    
+    dataFile.close()
     
     print("----------")

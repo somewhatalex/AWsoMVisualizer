@@ -1,8 +1,11 @@
 configs = {
-    #sim file access configs
+    # sim file access configs
     "simDirectory": "./simulations",
     "simParamLocation": "key_params.txt", #where sim parameter data is stored
     "simResultsLocation": "./run01/IH/trj_earth_n00005000.sat", #in folder run###_AWSoM
+
+    # where to save output data to
+    "outputDataFolder": "./output_data", # where plot images should be saved
 
     #plot appearance
     "plotSimLineColor": "#0362fc", #line color of sim run results in the final plots
@@ -19,7 +22,7 @@ configs = {
     "bestOverallFitLineColor": "red", # line of best fit overall the entire rotation
     "bestOverallFitLineWidth": "2",
     
-    #plot properties
+    # plot properties
     "dataToPlot": ["U", "n", "ti", "B"],
     "importantParams": ["U", "n"], # only include these params for best run calculation
     "yLabels": ["U (km/s)", "Np (cm^-3)", "Temperature (K)", "B (nT)"],
@@ -27,7 +30,7 @@ configs = {
     "isLogGraph": [False, False, True, False],
     "plotSaveFolder": "./output_plots", # where plot images should be saved
 
-    #scraping configs
+    # scraping configs
     "varsToScrape": ["V", "N", "T", "ABS_B"], # NOTE: vars must match corresponding variables in "dataToPlot"
     
     #poynting flux vs difference from actual plot properties
