@@ -27,7 +27,7 @@ git clone https://github.com/somewhatalex/AWsoMVisualizer.git
 
 Next, please install the following Python libraries. You should also have [Python 3.12](https://www.python.org/downloads/) or higher installed.
 ```
-pip install -u xarray cdflib cdasws matplotlib numpy scipy
+pip install -u xarray cdflib cdasws matplotlib numpy scipy tqdm
 ```
 Customizable user preferences can be found in [config_local.py](config_local.py). "config_local.py" contains a Python dict of editable values. The presets can be edited before running the program.
 

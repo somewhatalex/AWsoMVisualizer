@@ -2,6 +2,9 @@ import math
 import numpy as np
 from config_local import *
 from scipy.stats import spearmanr
+from scipy.integrate import simpson
+from scipy.spatial.distance import cdist
+from scipy.interpolate import interp1d
 
 def magnitude(arr):
     """
@@ -41,7 +44,7 @@ class datafile:
 
     def add(self, content):
         with open(self.rotationFile + '.txt', 'a') as file:
-            file.write(str(content) + " ")
+            file.write(str(content) + "\t")
             
     def newLine(self):
         with open(self.rotationFile + '.txt', 'rb+') as file:
@@ -49,7 +52,7 @@ class datafile:
             if file.tell() == 0:
                 return
             file.seek(-1, 2)
-            if file.read(1) == b' ':
+            if file.read(1) == b'\t':
                 file.seek(-1, 2)
                 file.truncate()
                 file.write(b'\n')
@@ -60,7 +63,7 @@ class datafile:
             if file.tell() == 0:
                 return
             file.seek(-1, 2)
-            if file.read(1) == b' ' or file.read(1) == b'\n':
+            if file.read(1) == b'\t' or file.read(1) == b'\n':
                 file.seek(-1, 2)
                 file.truncate()
 
@@ -106,42 +109,37 @@ def difference_sim_obs(simTimestamps, simValues, dataTimestamps, dataValues, met
         
         return scc
     elif method == "curve_distance":
-        L1 = max(dataTimestamps) - min(dataTimestamps)
-        
-        # D 1, 2
-        # Precompute the array of points for interpSimValues
-        interp_points = np.array([(dataTimestamps[j], point2) for j, point2 in enumerate(interpSimValues)])
-        
-        total_distance_1 = 0.0
-        
-        # Vectorize the distance calculations
-        for i, point1 in enumerate(dataValues):
-            point1_array = np.array([dataTimestamps[i], point1])
-            distances = np.linalg.norm(interp_points - point1_array, axis=1)
-            min_distance = np.min(distances)
-            total_distance_1 += min_distance
-        
-        total_distance_1 = total_distance_1 / L1
-            
-        # flip to get D 2, 1
-        temp = interpSimValues
-        interpSimValues = dataValues
-        dataValues = temp
-        
-        interp_points = np.array([(dataTimestamps[j], point2) for j, point2 in enumerate(interpSimValues)])
-        
-        total_distance_2 = 0.0
-        
-        # Vectorize the distance calculations
-        for i, point1 in enumerate(dataValues):
-            point1_array = np.array([dataTimestamps[i], point1])
-            distances = np.linalg.norm(interp_points - point1_array, axis=1)
-            min_distance = np.min(distances)
-            total_distance_2 += min_distance
-        
-        total_distance_2 = total_distance_2 / L1
-        
-        return (total_distance_1 + total_distance_2) / L1
+        def curveDist(x1, y1, x2, y2):
+            # normalization factors
+            X = 10
+            Y = max(max(y1) - min(y1), max(y2) - min(y2))
+
+            x1_normalized = (np.array(x1) - np.min(x1)) / X
+            y1_normalized = np.array(y1) / Y
+            x2_normalized = (np.array(x2) - np.min(x2)) / X
+            y2_normalized = np.array(y2) / Y
+
+            # make arrays of all points in each curve
+            curve1_points = np.column_stack((x1_normalized, y1_normalized))
+            curve2_points = np.column_stack((x2_normalized, y2_normalized))
+
+            # get distances between all points
+            distance_matrix = cdist(curve1_points, curve2_points, "euclidean")
+
+            # Find the minimum distance to curve 2 for each point in curve 1
+            min_distances_1_to_2 = np.min(distance_matrix, axis=1)
+
+            # Find the minimum distance to curve 1 for each point in curve 2
+            min_distances_2_to_1 = np.min(distance_matrix, axis=0)
+
+            # Integrate these minimum distances over the respective curves
+            D_1_2 = simpson(min_distances_1_to_2) / len(x1)
+            D_2_1 = simpson(min_distances_2_to_1) / len(x2)
+
+            D = (D_1_2 + D_2_1) / 2
+            return D
+
+        return curveDist(dataTimestamps, dataValues, simTimestamps, simValues)
     else:
         # mean squared error
         n = len(dataTimestamps)
@@ -210,7 +208,7 @@ def normalizeData(data):
 
     EFFECTS: Normalizes each value in data as a proportion of the max value
     """
-    if configs["diffCalcMethod"] == "scc": # spearman cc should NOT be normalized
+    if configs["diffCalcMethod"] == "scc" or configs["diffCalcMethod"] == "curve_distance": # spearman cc should NOT be normalized
         return data
     
     minValue = min(data)

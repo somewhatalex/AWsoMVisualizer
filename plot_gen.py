@@ -7,6 +7,7 @@ from scrape_data import scrapeData
 from datetime import datetime, timedelta
 from data_utils import *
 from plot_gen_poyntingflux import *
+from tqdm import tqdm
 
 def plotResults(plotRotation, rotationData, openPlotWindow = False):
     """
@@ -27,8 +28,11 @@ def plotResults(plotRotation, rotationData, openPlotWindow = False):
     dataToPlot = configs["dataToPlot"]
     
     dataFile = datafile(plotRotation)
-    dataFile.add("Poynting_flux Dist_U Dist_N Dist_T Dist_B ave_un")
+    dataFile.add("Poynting_flux\tDist_U\tDist_N\tDist_T\tDist_B\tave_un")
     dataFile.newLine()
+    
+    print("\n")
+    print(f"[Rotation = {plotRotation}] Plotting {len(dataToPlot)} quantities from {len(runResults)} simulation results ...")
 
     # sets up output folder (specified in config_local)
     if not os.path.exists(plotSaveDirectory):
@@ -58,6 +62,11 @@ def plotResults(plotRotation, rotationData, openPlotWindow = False):
     #
     # All subkeys are arrays with indices that correspond to each other
     plotData = dict()
+    
+    # sets up progress bar
+    total = 100
+    pbar = tqdm(total=total)
+    pbarIncrement = np.floor(((1 / (len(runResults) * len(dataToPlot))) * 100) * 10**8) / 10**8
     
     # loop through all sim runs in the rotation
     for runIter, run in enumerate(runResults):
@@ -145,6 +154,9 @@ def plotResults(plotRotation, rotationData, openPlotWindow = False):
             currentPlotData["diffValues"].append(lineDiffValue)
             currentPlotData["simRunNames"].append(run)
             currentPlotData["poyntingFluxes"].append(runResults[run]["poyntingFlux"])
+            
+            # update progress bar
+            pbar.update(pbarIncrement)
     
     # calculates line opacities and line of best fit
     for i, valueSet in enumerate(diffValues):
@@ -204,8 +216,10 @@ def plotResults(plotRotation, rotationData, openPlotWindow = False):
     
     bestRunName = simRunNames[indexOfBestLine]
     bestPoyntingFlux = runResults[bestRunName]["poyntingFlux"]
+    
+    pbar.update(100 - pbar.n)
+    pbar.close()
 
-    print(f"[Rotation = {plotRotation}] Plotted {len(dataToPlot)} quantities from {len(runResults)} simulation results.")
     print(f"Best simulation run: {bestRunName} (poyntingFlux = {bestPoyntingFlux})")
 
     # launches plot as new window if openPlotWindow is true
@@ -220,5 +234,3 @@ def plotResults(plotRotation, rotationData, openPlotWindow = False):
     plotPoyntingFluxGraph(diffAverages, filteredDiffValues, plotData[next(iter(plotData))]["poyntingFluxes"], plotRotation, plotSaveDirectory, openPlotWindow)
     
     dataFile.close()
-    
-    print("----------")
