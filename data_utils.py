@@ -111,33 +111,46 @@ def difference_sim_obs(simTimestamps, simValues, dataTimestamps, dataValues, met
     elif method == "curve_distance":
         def curveDist(x1, y1, x2, y2):
             # normalization factors
-            X = 10
-            Y = max(max(y1) - min(y1), max(y2) - min(y2))
-
-            x1_normalized = (np.array(x1) - np.min(x1)) / X
+            # 1 is observation, 2 is simulation
+            # 10 days in epoch time is 10.*24*3600
+            X = 10.*24*3600
+            # Normalization for OMNI data
+            Y = max(y1) - min(y1)
+            
+            x1_normalized = np.array(x1) / X
+            x2_normalized = np.array(x2) / X
             y1_normalized = np.array(y1) / Y
-            x2_normalized = (np.array(x2) - np.min(x2)) / X
             y2_normalized = np.array(y2) / Y
 
-            # make arrays of all points in each curve
-            curve1_points = np.column_stack((x1_normalized, y1_normalized))
-            curve2_points = np.column_stack((x2_normalized, y2_normalized))
+            n1 = len(x1)
+            n2 = len(x2)
+            d1=0
+            d2=0
 
-            # get distances between all points
-            distance_matrix = cdist(curve1_points, curve2_points, "euclidean")
+            x1c = np.add(x1_normalized[1:n1],x1_normalized[0:n1-1])/2
+            x2c = np.add(x2_normalized[1:n2],x2_normalized[0:n2-1])/2
+            y1c = np.add(y1_normalized[1:n1],y1_normalized[0:n1-1])/2
+            y2c = np.add(y2_normalized[1:n2],y2_normalized[0:n2-1])/2
 
-            # Find the minimum distance to curve 2 for each point in curve 1
-            min_distances_1_to_2 = np.min(distance_matrix, axis=1)
+            x1c = np.array(x1c)
+            x2c = np.array(x2c)
+            y1c = np.array(y1c)
+            y2c = np.array(y2c)
 
-            # Find the minimum distance to curve 1 for each point in curve 2
-            min_distances_2_to_1 = np.min(distance_matrix, axis=0)
+            d1c = np.sqrt( (x1_normalized[1:n1] - x1_normalized[0:n1-1])**2 + (y1_normalized[1:n1] - y1_normalized[0:n1-1])**2 )
+            d2c = np.sqrt( (x2_normalized[1:n2] - x2_normalized[0:n2-1])**2 + (y2_normalized[1:n2] - y2_normalized[0:n2-1])**2 )  
 
-            # Integrate these minimum distances over the respective curves
-            D_1_2 = simpson(min_distances_1_to_2) / len(x1)
-            D_2_1 = simpson(min_distances_2_to_1) / len(x2)
+            len1 = np.sum(d1c)
+            len2 = np.sum(d2c)
 
-            D = (D_1_2 + D_2_1) / 2
-            return D
+            for i in range(0, n1-1):
+                d1 = d1 + d1c[i]*np.min( np.sqrt( (x1c[i] - x2c)**2 + (y1c[i] - y2c)**2 ) )
+            for i in range(0, n2-1):
+                d2 = d2 + d2c[i]*np.min( np.sqrt( (x2c[i] - x1c)**2 + (y2c[i] - y1c)**2 ) )
+
+            d = (d1/len1 + d2/len2)/2
+
+            return d
 
         return curveDist(dataTimestamps, dataValues, simTimestamps, simValues)
     else:

@@ -49,7 +49,7 @@ All plots will be saved to your device in the folders specified via [config_loca
 | -sp     | Set  simulation path, default is ./simulations  |
 | -o       | Set folder to output plots, default is ./output_plots|
 | -showplot  | Opens graph(s) as a new window when script finishes  |
-| -m  | Specifies method to calculate difference between sim and actual data, default is "mse"  |
+| -m  | Specifies method to calculate difference between sim and actual data, default is "curve_distance"  |
 
 ### Difference Calculation Methods
 | -m [input]     | Description                                       |

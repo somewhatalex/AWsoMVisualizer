@@ -183,13 +183,13 @@ def plotResults(plotRotation, rotationData, openPlotWindow = False):
         # consistent poynting flux values across all variables
         dataFile.add(plotData[configs["dataToPlot"][0]]["poyntingFluxes"][i])
         for valueSet in diffValues:
-            dataFile.add(round(valueSet[i], 3))
+            dataFile.add(round(valueSet[i], 4))
         
         filteredDiffAvg = 0
         for valueSet in filteredDiffValues:
             filteredDiffAvg += valueSet[i]
             
-        dataFile.add(round(filteredDiffAvg / len(filteredDiffValues), 3))
+        dataFile.add(round(filteredDiffAvg / len(filteredDiffValues), 4))
         dataFile.newLine()
 
     # finds and plots overall best line

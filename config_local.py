@@ -37,7 +37,7 @@ configs = {
     "diffPlotColor": "blue",
     "diffBestPointColor": "red",
     "diffValueBins": 7, # number of tick marks on y axis of poynting flux plot
-    "diffCalcMethod": "mse"
+    "diffCalcMethod": "curve_distance"
 }
 
 #constants
