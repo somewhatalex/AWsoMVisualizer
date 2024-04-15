@@ -75,7 +75,7 @@ def plotResults(plotRotation, rotationData, openPlotWindow = False):
         endTime = max(runResults[run]['timestamp']).strftime('%Y-%m-%d %H:%M:%S')
 
         simRunNames.append(run)
-        poyntingFluxes.append(runResults[run]["poyntingFlux"])
+        poyntingFluxes.append(float(runResults[run]["poyntingFlux"]))
 
         # shifts the scraping timeframe back by 4.5 hours to account for delay in start/end of data collection vs sim timeframe
         startTimeDT = datetime.strptime(startTime, '%Y-%m-%d %H:%M:%S') - timedelta(hours = 4.5)
@@ -231,6 +231,7 @@ def plotResults(plotRotation, rotationData, openPlotWindow = False):
     plt.close()
     
     # Plot poynting flux value vs difference in lines
-    plotPoyntingFluxGraph(diffAverages, filteredDiffValues, plotData[next(iter(plotData))]["poyntingFluxes"], plotRotation, plotSaveDirectory, openPlotWindow)
+    poyntingFluxValues = [float(x) for x in plotData[next(iter(plotData))]["poyntingFluxes"]]
+    plotPoyntingFluxGraph(diffAverages, filteredDiffValues, poyntingFluxValues, plotRotation, plotSaveDirectory, openPlotWindow)
     
     dataFile.close()

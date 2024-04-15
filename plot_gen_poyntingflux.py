@@ -1,8 +1,25 @@
 from config_local import *
 import matplotlib.pyplot as plt
-from matplotlib.ticker import MaxNLocator
+from matplotlib.ticker import MaxNLocator, FixedLocator
 from data_utils import *
 import os
+
+def sortDataPoints(x_values, y_values):
+    """
+    REQUIRES: x_values and y_values are arrays of the same length
+    EFFECTS: Pairs x and y values together, then sorts them based on the x-value (ascending order)
+    """
+    paired_values = list(zip(x_values, y_values))
+    paired_values.sort(key=lambda x: x[0])
+
+    return zip(*paired_values)
+
+def scientificNotation(num):
+    """
+    REQUIRES: number
+    EFFECTS: returns the scientific notation representation of the number.
+    """
+    return "{:.1e}".format(num)
 
 def plotPoyntingFluxGraph(avgDiffValues, allDiffData, poyntingFluxValues, rotation, saveFolder, showPlots = False):
     """
@@ -24,6 +41,12 @@ def plotPoyntingFluxGraph(avgDiffValues, allDiffData, poyntingFluxValues, rotati
         os.makedirs(saveFolder)
         print(f"Created output folder at {saveFolder}")
         
+    # sort the x and y datapoints
+    poyntingFluxValues, avgDiffValues = sortDataPoints(poyntingFluxValues, avgDiffValues)
+    
+    for i, data in enumerate(allDiffData):
+        poyntingFluxValues, allDiffData[i] = sortDataPoints(poyntingFluxValues, allDiffData[i])
+        
     plt.figure(figsize = configs["plotDimensions"])
     
     #plots each individual variable's data points
@@ -37,7 +60,7 @@ def plotPoyntingFluxGraph(avgDiffValues, allDiffData, poyntingFluxValues, rotati
         
         minIndex = indexOfMinValue(data)
         
-        plt.text(0.5, 0.95, f"Best: {poyntingFluxValues[minIndex]} (Diff={round(np.min(data), 6)})", transform=plt.gca().transAxes, fontsize=10, ha='center', va='top')
+        plt.text(0.5, 0.95, f"Best: {scientificNotation(poyntingFluxValues[minIndex])} (Diff={round(np.min(data), 6)})", transform=plt.gca().transAxes, fontsize=10, ha='center', va='top')
         
         plotColors = [configs["diffBestPointColor"] if i == minIndex else configs["diffPlotColor"] for i in range(len(avgDiffValues))]
         scatterPlot = ax.scatter(poyntingFluxValues, data, color = plotColors)
@@ -45,12 +68,14 @@ def plotPoyntingFluxGraph(avgDiffValues, allDiffData, poyntingFluxValues, rotati
         
         plt.grid(True, linestyle = "--", alpha = 0.5)
         ax.set_ylabel(f"Diff Value ({configs['importantParams'][i]})")
+        
+        if np.max(avgDiffValues) > 1.5: ax.set_ylim(0, 2)
 
         plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
         plt.gca().yaxis.set_major_locator(MaxNLocator(nbins=configs["diffValueBins"]))
     
     #plots overall average diff values in last subplot
-    plt.subplot(len(allDiffData) + 1, 1, len(allDiffData) + 1)
+    ax = plt.subplot(len(allDiffData) + 1, 1, len(allDiffData) + 1)
     
     #sets min point to a different color
     minIndex = indexOfMinValue(avgDiffValues)
@@ -60,12 +85,13 @@ def plotPoyntingFluxGraph(avgDiffValues, allDiffData, poyntingFluxValues, rotati
     scatterPlot = plt.scatter(poyntingFluxValues, avgDiffValues, color = plotColors)
     scatterPlot.set_zorder(10)
     
-    plt.text(0.5, 0.95, f"Best: {poyntingFluxValues[minIndex]} (Diff={round(np.min(avgDiffValues), 6)})", transform=plt.gca().transAxes, fontsize=10, ha='center', va='top')
+    plt.text(0.5, 0.95, f"Best: {scientificNotation(poyntingFluxValues[minIndex])} (Diff={round(np.min(avgDiffValues), 6)})", transform=plt.gca().transAxes, fontsize=10, ha='center', va='top')
 
     plt.xlabel("Poynting Flux Values")
     plt.ylabel("Avg. Diff Value")
 
     plt.grid(True, linestyle = "--", alpha = 0.5)
+    if np.max(avgDiffValues) > 1.5: ax.set_ylim(0, 1.5)
 
     plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
     plt.gca().yaxis.set_major_locator(MaxNLocator(nbins=configs["diffValueBins"]))
